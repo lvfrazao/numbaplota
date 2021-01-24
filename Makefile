@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O3 -Wall -s
+CFLAGS = -O3 -Wall
 DEBUGFLAGS = -O3 -Wall -g -DDEBUG
 TARGET = numbaplota
 BUILD_PATH = ./
