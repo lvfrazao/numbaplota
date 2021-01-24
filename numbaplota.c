@@ -122,11 +122,13 @@ int main(int argc, char **argv)
         }
         printf("\n");
     }
+
+    // Construct the X axis
     // Max value for a double is 1.7E+308 which means the integer portion will have a max of 309 digits
-    char *maxX_str = calloc(num_digits(maxX) + 4, sizeof(char));
-    char *minX_str = calloc(num_digits(minX) + 4, sizeof(char));
-    snprintf(maxX_str, num_digits(maxX) + 4, "%.1f", maxY);
-    snprintf(minX_str, num_digits(minX) + 4, "%.1f", minY);
+    char *maxX_str = calloc(num_digits(maxX) + 5, sizeof(char));
+    char *minX_str = calloc(num_digits(minX) + 5, sizeof(char));
+    snprintf(maxX_str, num_digits(maxX) + 5, "_%.1f", maxY);
+    snprintf(minX_str, num_digits(minX) + 5, "_%.1f", minY);
     int len_max_x = strlen(maxX_str) > strlen(minX_str) ? strlen(maxX_str) : strlen(minX_str);
     free(maxX_str);
     free(minX_str);
@@ -146,7 +148,7 @@ int main(int argc, char **argv)
                 printf(" ");
                 continue;
             }
-            snprintf(xaxis_str, len_max_x, "%.1f", cur_lower_x);
+            snprintf(xaxis_str, len_max_x, "_%.1f", cur_lower_x);
             if (xaxis_str[row] == '\0')
                 printf(" ");
             else
@@ -280,6 +282,7 @@ PointList *read_input(FILE *f)
             pl->len++;
         }
     }
+    free(line);
 
     return pl;
 }
