@@ -2,6 +2,12 @@
 
 Plotting values in the terminal. Simply feed one or two columns of data (delimited by a space) and this plots it.
 
+## Usage
+
+Reads a stream of data either from a file or from stdin and plots it. Supports both single and double columns of data. Columns are delimited by a space character.
+
+Optionally supply the `--hist` flag to plot a histogram of the data instead of scatter plot. In hist mode we only support a single column of data. If two columns are provided, one column will be ignored.
+
 ## Examples
 
 Sine wave:
@@ -156,4 +162,55 @@ $ ./numbaplota x2.txt
        0 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
        . 1 4 6 9 1 4 6 9 2 4 7 9 2 4 7 9 2 4 7 0 2 5 7 0 2 5 7 0 2 5 7 0 3 5 8 0 3 5 8 
        1                                                                               
+```
+
+Histogram
+
+```
+$ python3 -c 'import random; print("\n".join([str(random.gauss(5, 1)) for i in range(5000)]))' | ./numbaplota --hist
+245.3 |                                          *                                      
+239.0 |                                            *                                    
+232.7 |                                                                                 
+226.4 |                                        *  * *                                   
+220.1 |                                                                                 
+213.8 |                                       *      *                                  
+207.6 |                                     **  *                                       
+201.3 |                                               *                                 
+195.0 |                                                *                                
+188.7 |                                                                                 
+182.4 |                                                                                 
+176.1 |                                    *                                            
+169.8 |                                                 *                               
+163.5 |                                                                                 
+157.2 |                                                  *                              
+150.9 |                                                                                 
+144.7 |                                   *               *                             
+138.4 |                                                    *                            
+132.1 |                                  *                                              
+125.8 |                                                                                 
+119.5 |                                 *                   *                           
+113.2 |                                                                                 
+106.9 |                                                      *                          
+100.6 |                               *                       *                         
+ 94.3 |                                *                                                
+ 88.1 |                                                                                 
+ 81.8 |                              *                                                  
+ 75.5 |                                                        *                        
+ 69.2 |                             *                                                   
+ 62.9 |                                                                                 
+ 56.6 |                            *                             **                     
+ 50.3 |                                                         *                       
+ 44.0 |                          *                                                      
+ 37.7 |                         * *                                *                    
+ 31.4 |                                                                                 
+ 25.2 |                        *                                    **                  
+ 18.9 |                      *                                        **                
+ 12.6 |                    *  *                                                         
+  6.3 |          ** *  **** *                                           ********  *   * 
+  0.0 | *********  * **                                                         ** ***  
+ -6.3 |                                                                                 
+       _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+       - 0 0 0 0 1 1 1 1 2 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 5 6 6 6 6 7 7 7 7 8 8 8 8 9 9
+       0 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+       . 1 3 6 8 0 3 5 7 0 2 4 7 9 1 4 6 8 1 3 5 8 0 2 5 7 9 2 4 6 9 1 3 6 8 0 3 5 7 0 2
 ```
