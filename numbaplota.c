@@ -471,7 +471,5 @@ PointList *bucket_points(PointList *pl_0, int num_bins, double bin_width)
         pl_1->len++;
     }
     free(buckets);
-    printf("Here\n");
-    print_points(pl_1);
     return pl_1;
 }
