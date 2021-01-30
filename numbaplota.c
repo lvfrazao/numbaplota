@@ -37,17 +37,22 @@ int check_xpoints_between(PointList *pl, double lower, double upper);
 void get_ypoints_between(PointList *pl, PointList *ret_pl, double lower, double upper);
 int num_digits(double num);
 void clear_str(char *str, int len);
+PointList *bucket_points(PointList *pl_0, int num_bins, double bin_width);
 
 int main(int argc, char **argv)
 {
     char *usage =
         "Usage: numbaplota\n"
         "Positional Arguments:\n"
-        "    filename:    Name of file to read from, alternately reads from stdin\n";
+        "    filename:    Name of file to read from, alternately reads from stdin\n"
+        "Optional Arguments:\n"
+        "    --hist:    Enable histogram mode -- Only compatible with single column data!\n";
     // TODO: Add option for setting different delimiters
     // TODO: Add option for setting graph size (maybe detect term size?)
     PointList *points;
     FILE *f;
+    int hist_mode = 0;
+    int is_one = 1; // Need this for case 3
     switch (argc)
     {
     case 1:
@@ -55,6 +60,13 @@ int main(int argc, char **argv)
         points = read_input(stdin);
         break;
     case 2:
+        if (strcmp(argv[1], "--hist") == 0)
+        {
+            // If the param is --hist turn on hist mode and read from stdin
+            points = read_input(stdin);
+            hist_mode = 1;
+            break;
+        }
         // Read from file
         f = fopen(argv[1], "r");
         if (f == NULL)
@@ -65,9 +77,34 @@ int main(int argc, char **argv)
         points = read_input(f);
         fclose(f);
         break;
+    case 3:
+        // Check if either param is --hist else fail
+        if ((is_one = strcmp(argv[1], "--hist")) == 0 || strcmp(argv[2], "--hist") == 0)
+        {
+            int arg_idx = is_one ? 1 : 2;
+            f = fopen(argv[arg_idx], "r");
+            if (f == NULL)
+            {
+                perror("Error opening input file");
+                exit(EXIT_FAILURE);
+            }
+            points = read_input(f);
+            fclose(f);
+            hist_mode = 1;
+            break;
+        }
     default:
         fprintf(stderr, "Invalid options\n%s", usage);
         return EXIT_FAILURE;
+    }
+
+    if (hist_mode) {
+        Bounds bounds = get_axis_bounds(points);
+        int num_bins = COL;
+        double bin_width = bounds.max.y / (COL - 1);
+        PointList *old_points = points;
+        points = bucket_points(points, num_bins, bin_width);
+        free(old_points);
     }
 
 #ifdef DEBUG
@@ -136,7 +173,8 @@ int main(int argc, char **argv)
 
     for (int row = 0; row < len_max_x; row++)
     {
-        for (int i = 0; i < len_max; i++){
+        for (int i = 0; i < len_max; i++)
+        {
             printf(" ");
         }
         printf("  ");
@@ -144,7 +182,8 @@ int main(int argc, char **argv)
         for (double cur_lower_x = minX; cur_lower_x < maxX; cur_lower_x += incx)
         {
             col_num++;
-            if (col_num % 2 == 0) {
+            if (col_num % 2 == 0)
+            {
                 printf(" ");
                 continue;
             }
@@ -194,7 +233,7 @@ void get_ypoints_between(PointList *pl, PointList *ret_pl, double lower, double 
 
     for (int i = 0; i < pl->len; i++)
     {
-        if (pl->points[i].y > lower && pl->points[i].y <= upper)
+        if (pl->points[i].y >= lower && pl->points[i].y < upper)
         {
             ret_pl->points[ret_pl->len] = pl->points[i];
             ret_pl->len++;
@@ -374,4 +413,65 @@ char *strip(char *str, char c)
         i++;
     }
     return str;
+}
+
+PointList *bucket_points(PointList *pl_0, int num_bins, double bin_width)
+{
+    // int buf_size = INIT_BUF;
+    PointList *pl_1 = malloc(sizeof(PointList));
+    Point *p = malloc(sizeof(Point) * num_bins);
+    int *buckets = calloc(num_bins, sizeof(int));
+    if (p == NULL || pl_1 == NULL || buckets == NULL)
+    {
+        perror("Failed to allocate buffer for data");
+        exit(EXIT_FAILURE);
+    }
+    pl_1->points = p;
+    pl_1->len = 0;
+    int idx = 0;
+
+    // Iterate over original points, start adding them to buckets
+    for (int i = 0; i < pl_0->len; i++)
+    {
+        /* 
+        Buckets are inclusive on low end
+        First bucket is always [0,bin_width)
+        All buckets can be expressed as [j * bin_width, j * bin_width + bin_width)
+        Where j is the index into `buckets`
+        Or, expressed as a system of equations:
+        1. n < j * bin_width + bin_width
+        2. n >= j * bin_width
+        
+        For any given number n, we can find its bucket by solving the second
+        equation by itself and truncating the value to an integer.
+        For example, let bin_width = 10:
+            - when n = 10.0, we get 10.0 >= 10j which is 1.0 >= j. If we
+              truncate 1.0 we get 1 which is the correct index of buckets
+            - when n = 15.0, we get 15.0 >= 10j which is 1.5 >= j. This
+              gives 1 for the index when truncated
+            - n = 30.0, 30.0 >= 10j, 3.0 >= j => j = 3
+        */
+        idx = (int)(pl_0->points[i].y / bin_width);
+        // If (num_bins * bin_width) <= max_y_val then we overflow one of our
+        // buffers on the heap because we will try to access `buckets` past its
+        // bounds
+        if (idx >= num_bins)
+        {
+            // oh no
+            fprintf(stderr, "%s: we tried to overrun our buffer, crashing\n", __func__);
+            exit(EXIT_FAILURE);
+        }
+        buckets[idx]++;
+    }
+
+    for (int i = 0; i < num_bins; i++)
+    {
+        pl_1->points[i].x = bin_width * i;
+        pl_1->points[i].y = (double)buckets[i];
+        pl_1->len++;
+    }
+    free(buckets);
+    printf("Here\n");
+    print_points(pl_1);
+    return pl_1;
 }
